@@ -28,7 +28,7 @@ type Fault struct {
 
 // Make fault fit os.Error
 func (f Fault) String() string {
-    return f.FaultString
+    return fmt.Sprintf("%s (%d)", f.FaultString, f.FaultCode)
 }
 
 type error string;
@@ -125,6 +125,46 @@ func (s StructValue) Marshall() (ret string) {
     ret += "</struct>";
     return
 }
+
+func (s StructValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
+    for {
+        var (
+            name string;
+            value MarshallUnmarshaller
+        )
+        // Skip <member>
+        t, err := p.Token();
+        if err != nil {return nil,err}
+        end,ok := t.(xml.EndElement);
+        if ok {
+            if end.Name.Local == "struct" {
+                return s, nil
+            }
+        }
+
+        for x:=0;x<2;x++ {
+            t, err = p.Token();
+            if err != nil {return nil,err}
+            field, ok := t.(xml.StartElement);
+            if !ok {return nil, error("Unexpected Token")}
+            switch field.Name.Local {
+                case "name":
+                    name,err = readBody(p);
+                case "value":
+                    value,err = parseMessage(p);
+                    // Skip </value>
+                    _,_ = p.Token();
+            }
+            if err != nil {return nil, err}
+        }
+        s[name] = value;
+        // Skip </member>
+        t, err = p.Token();
+        if err != nil {return nil,err}
+    }
+    return s, nil
+}
+
 func (s ArrayValue) Marshall() (ret string) {
     ret = "<array><data>";
     for _, value := range s {
@@ -133,9 +173,26 @@ func (s ArrayValue) Marshall() (ret string) {
     ret += "</data></array>";
     return
 }
+
 func (f Fault) Marshall() string {
     faultStruct := StructValue{"faultCode": IntValue(f.FaultCode), "faultString": StringValue(f.FaultString)};
     return fmt.Sprintf("<fault>%s</fault>", faultStruct.Marshall())
+}
+
+func (f Fault) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
+    t, err := p.Token();
+    if err != nil {return nil, err}
+    start,ok := t.(xml.StartElement);
+    if !ok || start.Name.Local != "value" {return nil, error("Unexpected symbol")}
+    m, err := parseMessage(p);
+    if err != nil {return nil, err}
+    s,ok1 := m.(StructValue);
+    msg, ok2 := s["faultString"].(StringValue);
+    code, ok3 := s["faultCode"].(IntValue);
+    if !(ok1 && ok2 && ok3) {return nil, error("Invalid fault response")}
+    f.FaultString = string(msg);
+    f.FaultCode = int(code);
+    return f, nil
 }
 
 func ParseMessage(r io.Reader) (MarshallUnmarshaller, os.Error) {
@@ -163,6 +220,11 @@ func parseMessage(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
             return DateTimeValue{}.Unmarshall(p)
         case "base64":
             return Base64Value(make([]byte,0)).Unmarshall(p)
+        case "struct":
+            return StructValue{}.Unmarshall(p)
+        case "fault":
+            return Fault{}.Unmarshall(p)
+        default: return nil, error(fmt.Sprintf("Unknown type: %s", start.Name.Local))
     }
     return nil, nil
 }
