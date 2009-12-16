@@ -102,7 +102,8 @@ func (b Base64Value) Marshall() string {
 func (b Base64Value) Unmarshall(s string) (MarshallUnmarshaller, os.Error) {
     decLen := base64.StdEncoding.DecodedLen(len(s));
     b = Base64Value(make([]byte, decLen));
-    _,err := base64.StdEncoding.Decode(b, strings.Bytes(s));
+    rLen,err := base64.StdEncoding.Decode(b, strings.Bytes(s));
+    b = b[0:rLen];
     return b,err
 }
 
