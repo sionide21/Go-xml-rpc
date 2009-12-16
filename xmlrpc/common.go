@@ -173,11 +173,9 @@ func readBody(p *xml.Parser) (string, os.Error) {
     for {
         t,err := p.Token();
         if (err != nil) { return "", err }
-        switch t.(type) {
+        switch v := t.(type) {
             case xml.CharData:
-                s, ok := t.(string);
-                if !ok {return "", error("Something is terribly wrong")}
-                ret += s
+                ret += string(v)
             case xml.EndElement:
                 return ret, nil
             case xml.ProcInst:
