@@ -7,7 +7,7 @@ type MarshallUnmarshaller interface {
     // Get trasmittable value of this item
     Marshall() string;
     // Populate this item based on the provided value
-    Unmarshall(string) (MarshallUnmarshaller,os.Error);
+    Unmarshall(*xml.Parser) (MarshallUnmarshaller,os.Error);
 }
 
 // Simple types
@@ -42,7 +42,9 @@ func (i IntValue) Marshall() string {
     return fmt.Sprintf("<int>%v</int>", i)
 }
 
-func (i IntValue) Unmarshall(s string) (MarshallUnmarshaller,os.Error) {
+func (i IntValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller,os.Error) {
+    s, er := readBody(p);
+    if er != nil { return nil, er }
     tempInt, err := strconv.Atoi(s);
     i = IntValue(tempInt);
     return i,err
@@ -52,7 +54,9 @@ func (b BooleanValue) Marshall() string {
     return fmt.Sprintf("<boolean>%v</boolean>", b)
 }
 
-func (b BooleanValue) Unmarshall(s string) (MarshallUnmarshaller,os.Error) {
+func (b BooleanValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller,os.Error) {
+    s, er := readBody(p);
+    if er != nil { return nil, er }
     switch s {
         case "0":
             b = BooleanValue(false)
@@ -68,7 +72,9 @@ func (s StringValue) Marshall() string {
     return fmt.Sprintf("<string>%v</string>", s)
 }
 
-func (s StringValue) Unmarshall(val string) (MarshallUnmarshaller,os.Error) {
+func (s StringValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller,os.Error) {
+    val, er := readBody(p);
+    if er != nil { return nil, er }
     s = StringValue(val);
     return s,nil;
 }
@@ -77,7 +83,9 @@ func (d DoubleValue) Marshall() string {
     return fmt.Sprintf("<double>%v</double>", d)
 }
 
-func (d DoubleValue) Unmarshall(val string) (MarshallUnmarshaller, os.Error) {
+func (d DoubleValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
+    val, er := readBody(p);
+    if er != nil { return nil, er }
     tempDouble, err := strconv.Atof(val);
     d = DoubleValue(tempDouble);
     return d,err
@@ -88,7 +96,7 @@ func (d DateTimeValue) Marshall() string {
     return fmt.Sprintf("<dateTime.iso8601>%s</dateTime.iso8601>", "NOT IMPLEMENTED")
 }
 
-func (d DateTimeValue) Unmarshall(val string) (MarshallUnmarshaller, os.Error) {
+func (d DateTimeValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
     return d,error("date Not Implemented")
 }
 
@@ -99,7 +107,9 @@ func (b Base64Value) Marshall() string {
     return fmt.Sprintf("<base64>%s</base64>", string(enc));
 }
 
-func (b Base64Value) Unmarshall(s string) (MarshallUnmarshaller, os.Error) {
+func (b Base64Value) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
+    s, er := readBody(p);
+    if er != nil { return nil, er }
     decLen := base64.StdEncoding.DecodedLen(len(s));
     b = Base64Value(make([]byte, decLen));
     rLen,err := base64.StdEncoding.Decode(b, strings.Bytes(s));
@@ -142,29 +152,17 @@ func parseMessage(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
         case "int":
             fallthrough
         case "i4":
-            s, er := readBody(p);
-            if er != nil { return nil, er }
-            return IntValue(0).Unmarshall(s)
+            return IntValue(0).Unmarshall(p)
         case "boolean":
-            s, er := readBody(p);
-            if er != nil { return nil, er }
-            return BooleanValue(false).Unmarshall(s)
+            return BooleanValue(false).Unmarshall(p)
         case "string":
-            s, er := readBody(p);
-            if er != nil { return nil, er }
-            return StringValue(s), nil
+            return StringValue("").Unmarshall(p)
         case "double":
-            s, er := readBody(p);
-            if er != nil { return nil, er }
-            return DoubleValue(0).Unmarshall(s)
+            return DoubleValue(0).Unmarshall(p)
         case "dateTime.iso8601":
-            s, er := readBody(p);
-            if er != nil { return nil, er }
-            return DateTimeValue{}.Unmarshall(s)
+            return DateTimeValue{}.Unmarshall(p)
         case "base64":
-            s, er := readBody(p);
-            if er != nil { return nil, er }
-            return Base64Value(make([]byte,0)).Unmarshall(s)
+            return Base64Value(make([]byte,0)).Unmarshall(p)
     }
     return nil, nil
 }
