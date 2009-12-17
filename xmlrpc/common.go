@@ -174,6 +174,43 @@ func (s ArrayValue) Marshall() (ret string) {
     return
 }
 
+func (a ArrayValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
+    if len(a) == 0 { a = make(ArrayValue, 2) }
+    // Skip <data>
+    t, err := p.Token();
+    if err != nil {return nil,err}
+    for x:=0;;x++{
+        var value MarshallUnmarshaller;
+        t, err = p.Token();
+        if err != nil {return nil,err}
+        end,ok := t.(xml.EndElement);
+        if ok {
+            if end.Name.Local == "data" {
+                // skip </array>
+                p.Token();
+                return a, nil
+            }
+        }
+
+        fmt.Println(t)
+        value,err = parseMessage(p);
+        if err != nil {return nil, err}
+        if cap(a) <= x {
+            b := make(ArrayValue, 2*x);
+            for i,c := range a {
+                b[i] = c
+            }
+            a = b;
+        }
+        a[x] = value;
+        // Skip </value>
+        t, err = p.Token();
+        if err != nil {return nil,err}
+    }
+    return a, nil
+
+}
+
 func (f Fault) Marshall() string {
     faultStruct := StructValue{"faultCode": IntValue(f.FaultCode), "faultString": StringValue(f.FaultString)};
     return fmt.Sprintf("<fault>%s</fault>", faultStruct.Marshall())
@@ -204,7 +241,7 @@ func parseMessage(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
     t, err := p.Token();
     if err != nil {return nil, err}
     start,ok := t.(xml.StartElement);
-    if !ok {return nil, error("Unexpected symbol")}
+    if !ok {return nil, error(fmt.Sprintf("Unexpected symbol: %v", t))}
     switch start.Name.Local {
         case "int":
             fallthrough
@@ -219,11 +256,13 @@ func parseMessage(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
         case "dateTime.iso8601":
             return DateTimeValue{}.Unmarshall(p)
         case "base64":
-            return Base64Value(make([]byte,0)).Unmarshall(p)
+            return make(Base64Value,0).Unmarshall(p)
         case "struct":
             return StructValue{}.Unmarshall(p)
         case "fault":
             return Fault{}.Unmarshall(p)
+        case "array":
+            return make(ArrayValue,0).Unmarshall(p)
         default: return nil, error(fmt.Sprintf("Unknown type: %s", start.Name.Local))
     }
     return nil, nil
