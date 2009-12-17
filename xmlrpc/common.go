@@ -212,8 +212,8 @@ func (a ArrayValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
 }
 
 func (f Fault) ToXML() string {
-    faultStruct := StructValue{"faultCode": IntValue(f.FaultCode), "faultString": StringValue(f.FaultString)};
-    return fmt.Sprintf("<fault>%s</fault>", faultStruct.ToXML())
+    faultStruct := StructValue{"faultCode": IntValue(f.FaultCode), "faultString": StringValue(f.FaultString)}
+    return faultStruct.ToXML()
 }
 
 func (f Fault) LoadXML(p *xml.Parser) (ParamValue, os.Error) {

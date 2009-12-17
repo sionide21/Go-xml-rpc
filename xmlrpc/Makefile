@@ -7,5 +7,7 @@ include $(GOROOT)/src/Make.$(GOARCH)
 TARG=xmlrpc
 GOFILES=\
     common.go\
+    request.go\
+    response.go\
 
 include $(GOROOT)/src/Make.pkg

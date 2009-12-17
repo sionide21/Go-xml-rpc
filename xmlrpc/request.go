@@ -18,4 +18,5 @@ func (r Request) SendXML(out io.Writer) {
         io.WriteString(out, "</value></param>")
     }
     io.WriteString(out, "</params>")
+    io.WriteString(out, "</methodCall>")
 }
