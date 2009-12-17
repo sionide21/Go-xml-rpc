@@ -20,6 +20,8 @@ func TestSimpleXMLReader(t *testing.T) {
     runTest("<boolean>1</boolean>", BooleanValue(true), defaultCompare, t);
     runTest("<double>3.14</double>", DoubleValue(3.14), defaultCompare, t);
     runTest("<base64>SGVsbG8gV29ybGQ=</base64>", Base64Value(strings.Bytes("Hello World")), arrayCompare, t)
+    //runTest("<?xml version=\"1.0\"?>\n<array> \n\t<data>\n\t\t<value><base64>SGVsbG8gV29ybGQ=</base64></value>\n\t</data>\n</array>", Base64Value(strings.Bytes("Hello World")), arrayCompare, t)
+    //runTest("<?xml version=\"1.0\"?>\n<struct>\n\t<member>\t<name>Something</name><value><array> \n\t<data>\n\t\t<value><base64>SGVsbG8gV29ybGQ=</base64></value>\n\t</data>\n</array></value></member></struct>", Base64Value(strings.Bytes("Hello World")), arrayCompare, t)
 }
 
 func runTest(xml string, value ParamValue, compare comp, t *testing.T) {

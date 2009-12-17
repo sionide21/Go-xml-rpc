@@ -10,6 +10,26 @@ type ParamValue interface {
     LoadXML(*xml.Parser) (ParamValue,os.Error);
 }
 
+// Allows for easier handling of xml tokens
+type tokenStream struct { *xml.Parser }
+func (t tokenStream) next(allowChar bool) (xml.Token, os.Error) {
+    tok, err := t.Token()
+    if err != nil { return nil, err }
+    switch v := tok.(type) {
+        case xml.StartElement: return v, nil
+        case xml.EndElement:   return v, nil
+        case xml.CharData:
+            if !allowChar {
+                return t.next(allowChar)
+            }
+            return v, nil
+        case xml.Comment:      return t.next(allowChar)
+        case xml.ProcInst:     return t.next(allowChar)
+        case xml.Directive:    return t.next(allowChar)
+    }
+    return nil, error("Unknown Token Type")
+}
+
 // Simple types
 type IntValue int;
 type BooleanValue bool;
@@ -126,40 +146,41 @@ func (s StructValue) ToXML() (ret string) {
     return
 }
 
-func (s StructValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
+func (s StructValue) LoadXML(parser *xml.Parser) (ParamValue, os.Error) {
+    p := tokenStream{parser}
     for {
         var (
             name string;
             value ParamValue
         )
         // Skip <member>
-        t, err := p.Token();
+        t, err := p.next(false);
         if err != nil {return nil,err}
         end,ok := t.(xml.EndElement);
         if ok {
-            if end.Name.Local == "struct" {
+            if strings.ToLower(end.Name.Local) == "struct" {
                 return s, nil
             }
         }
 
         for x:=0;x<2;x++ {
-            t, err = p.Token();
+            t, err = p.next(false);
             if err != nil {return nil,err}
             field, ok := t.(xml.StartElement);
-            if !ok {return nil, error("Unexpected Token")}
+            if !ok {return nil, error(fmt.Sprintf("Unexpected Token: %v, (%+T)", t, t, x)) }
             switch field.Name.Local {
                 case "name":
-                    name,err = readBody(p);
+                    name,err = readBody(p.Parser);
                 case "value":
-                    value,err = parseMessage(p);
+                    value,err = parseMessage(p.Parser);
                     // Skip </value>
-                    _,_ = p.Token();
+                    p.next(false);
             }
             if err != nil {return nil, err}
         }
         s[name] = value;
         // Skip </member>
-        t, err = p.Token();
+        t, err = p.next(false);
         if err != nil {return nil,err}
     }
     return s, nil
@@ -174,26 +195,26 @@ func (s ArrayValue) ToXML() (ret string) {
     return
 }
 
-func (a ArrayValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
+func (a ArrayValue) LoadXML(parser *xml.Parser) (ParamValue, os.Error) {
     if len(a) == 0 { a = make(ArrayValue, 2) }
+    var x int
+    p := tokenStream{parser}
     // Skip <data>
-    t, err := p.Token();
+    t, err := p.next(false);
     if err != nil {return nil,err}
-    for x:=0;;x++{
+    for x=0;;x++{
         var value ParamValue;
-        t, err = p.Token();
+        t, err = p.next(false);
         if err != nil {return nil,err}
         end,ok := t.(xml.EndElement);
         if ok {
             if end.Name.Local == "data" {
                 // skip </array>
-                p.Token();
-                return a, nil
+                p.next(false)
+                return a[0:x], nil
             }
         }
-
-        fmt.Println(t)
-        value,err = parseMessage(p);
+        value,err = parseMessage(p.Parser);
         if err != nil {return nil, err}
         if cap(a) <= x {
             b := make(ArrayValue, 2*x);
@@ -204,10 +225,10 @@ func (a ArrayValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
         }
         a[x] = value;
         // Skip </value>
-        t, err = p.Token();
+        t, err = p.next(false);
         if err != nil {return nil,err}
     }
-    return a, nil
+    return a[0:x], nil
 
 }
 
@@ -238,7 +259,7 @@ func ParseMessage(r io.Reader) (ParamValue, os.Error) {
 }
 
 func parseMessage(p *xml.Parser) (ParamValue, os.Error) {
-    t, err := p.Token();
+    t, err := tokenStream{p}.next(false);
     if err != nil {return nil, err}
     start,ok := t.(xml.StartElement);
     if !ok {return nil, error(fmt.Sprintf("Unexpected symbol: %v", t))}
@@ -271,16 +292,13 @@ func parseMessage(p *xml.Parser) (ParamValue, os.Error) {
 func readBody(p *xml.Parser) (string, os.Error) {
     ret := "";
     for {
-        t,err := p.Token();
+        t,err := tokenStream{p}.next(true);
         if (err != nil) { return "", err }
         switch v := t.(type) {
             case xml.CharData:
                 ret += string(v)
             case xml.EndElement:
                 return ret, nil
-            case xml.ProcInst:
-            case xml.Comment:
-            case xml.Directive:
             default:
                 return "", error("Unexpected token")
         }
