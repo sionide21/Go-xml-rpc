@@ -3,11 +3,11 @@ package xmlrpc
 import ("time"; "fmt"; "encoding/base64";  "strconv"; "strings"; "xml"; "os"; "io")
 
 // The interface that all values that want to be transmitted must conform to.
-type MarshallUnmarshaller interface {
+type ParamValue interface {
     // Get trasmittable value of this item
-    Marshall() string;
+    ToXML() string;
     // Populate this item based on the provided value
-    Unmarshall(*xml.Parser) (MarshallUnmarshaller,os.Error);
+    LoadXML(*xml.Parser) (ParamValue,os.Error);
 }
 
 // Simple types
@@ -17,8 +17,8 @@ type StringValue string;
 type DoubleValue float;
 type DateTimeValue time.Time;
 type Base64Value []byte;
-type StructValue map[string] MarshallUnmarshaller;
-type ArrayValue []MarshallUnmarshaller;
+type StructValue map[string] ParamValue;
+type ArrayValue []ParamValue;
 
 // An error returned from the rpc server
 type Fault struct {
@@ -37,12 +37,12 @@ func (e error) String() string {
     return string(e)
 }
 
-// Marshal and Unmarshall functions
-func (i IntValue) Marshall() string {
+// Marshal and LoadXML functions
+func (i IntValue) ToXML() string {
     return fmt.Sprintf("<int>%v</int>", i)
 }
 
-func (i IntValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller,os.Error) {
+func (i IntValue) LoadXML(p *xml.Parser) (ParamValue,os.Error) {
     s, er := readBody(p);
     if er != nil { return nil, er }
     tempInt, err := strconv.Atoi(s);
@@ -50,11 +50,11 @@ func (i IntValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller,os.Error) {
     return i,err
 }
 
-func (b BooleanValue) Marshall() string {
+func (b BooleanValue) ToXML() string {
     return fmt.Sprintf("<boolean>%v</boolean>", b)
 }
 
-func (b BooleanValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller,os.Error) {
+func (b BooleanValue) LoadXML(p *xml.Parser) (ParamValue,os.Error) {
     s, er := readBody(p);
     if er != nil { return nil, er }
     switch s {
@@ -68,22 +68,22 @@ func (b BooleanValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller,os.Error) 
     return b,nil;
 }
 
-func (s StringValue) Marshall() string {
+func (s StringValue) ToXML() string {
     return fmt.Sprintf("<string>%v</string>", s)
 }
 
-func (s StringValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller,os.Error) {
+func (s StringValue) LoadXML(p *xml.Parser) (ParamValue,os.Error) {
     val, er := readBody(p);
     if er != nil { return nil, er }
     s = StringValue(val);
     return s,nil;
 }
 
-func (d DoubleValue) Marshall() string {
+func (d DoubleValue) ToXML() string {
     return fmt.Sprintf("<double>%v</double>", d)
 }
 
-func (d DoubleValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
+func (d DoubleValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
     val, er := readBody(p);
     if er != nil { return nil, er }
     tempDouble, err := strconv.Atof(val);
@@ -91,23 +91,23 @@ func (d DoubleValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) 
     return d,err
 }
 
-func (d DateTimeValue) Marshall() string {
+func (d DateTimeValue) ToXML() string {
     // TODO try to get ISO8601 in stdlib
     return fmt.Sprintf("<dateTime.iso8601>%s</dateTime.iso8601>", "NOT IMPLEMENTED")
 }
 
-func (d DateTimeValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
+func (d DateTimeValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
     return d,error("date Not Implemented")
 }
 
-func (b Base64Value) Marshall() string {
+func (b Base64Value) ToXML() string {
     encLen := base64.StdEncoding.EncodedLen(len(b));
     enc := make([]byte, encLen);
     base64.StdEncoding.Encode(enc, b);
     return fmt.Sprintf("<base64>%s</base64>", string(enc));
 }
 
-func (b Base64Value) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
+func (b Base64Value) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
     s, er := readBody(p);
     if er != nil { return nil, er }
     decLen := base64.StdEncoding.DecodedLen(len(s));
@@ -117,20 +117,20 @@ func (b Base64Value) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) 
     return b,err
 }
 
-func (s StructValue) Marshall() (ret string) {
+func (s StructValue) ToXML() (ret string) {
     ret = "<struct>";
     for key, value := range s {
-        ret += fmt.Sprintf("<member><name>%s</name><value>%s</value></member>", key, value.Marshall())
+        ret += fmt.Sprintf("<member><name>%s</name><value>%s</value></member>", key, value.ToXML())
     }
     ret += "</struct>";
     return
 }
 
-func (s StructValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
+func (s StructValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
     for {
         var (
             name string;
-            value MarshallUnmarshaller
+            value ParamValue
         )
         // Skip <member>
         t, err := p.Token();
@@ -165,22 +165,22 @@ func (s StructValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) 
     return s, nil
 }
 
-func (s ArrayValue) Marshall() (ret string) {
+func (s ArrayValue) ToXML() (ret string) {
     ret = "<array><data>";
     for _, value := range s {
-        ret += fmt.Sprintf("<value>%s</value>", value.Marshall())
+        ret += fmt.Sprintf("<value>%s</value>", value.ToXML())
     }
     ret += "</data></array>";
     return
 }
 
-func (a ArrayValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
+func (a ArrayValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
     if len(a) == 0 { a = make(ArrayValue, 2) }
     // Skip <data>
     t, err := p.Token();
     if err != nil {return nil,err}
     for x:=0;;x++{
-        var value MarshallUnmarshaller;
+        var value ParamValue;
         t, err = p.Token();
         if err != nil {return nil,err}
         end,ok := t.(xml.EndElement);
@@ -211,12 +211,12 @@ func (a ArrayValue) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
 
 }
 
-func (f Fault) Marshall() string {
+func (f Fault) ToXML() string {
     faultStruct := StructValue{"faultCode": IntValue(f.FaultCode), "faultString": StringValue(f.FaultString)};
-    return fmt.Sprintf("<fault>%s</fault>", faultStruct.Marshall())
+    return fmt.Sprintf("<fault>%s</fault>", faultStruct.ToXML())
 }
 
-func (f Fault) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
+func (f Fault) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
     t, err := p.Token();
     if err != nil {return nil, err}
     start,ok := t.(xml.StartElement);
@@ -232,37 +232,37 @@ func (f Fault) Unmarshall(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
     return f, nil
 }
 
-func ParseMessage(r io.Reader) (MarshallUnmarshaller, os.Error) {
+func ParseMessage(r io.Reader) (ParamValue, os.Error) {
     p := xml.NewParser(r);
     return parseMessage(p)
 }
 
-func parseMessage(p *xml.Parser) (MarshallUnmarshaller, os.Error) {
+func parseMessage(p *xml.Parser) (ParamValue, os.Error) {
     t, err := p.Token();
     if err != nil {return nil, err}
     start,ok := t.(xml.StartElement);
     if !ok {return nil, error(fmt.Sprintf("Unexpected symbol: %v", t))}
-    switch start.Name.Local {
+    switch strings.ToLower(start.Name.Local) {
         case "int":
             fallthrough
         case "i4":
-            return IntValue(0).Unmarshall(p)
+            return IntValue(0).LoadXML(p)
         case "boolean":
-            return BooleanValue(false).Unmarshall(p)
+            return BooleanValue(false).LoadXML(p)
         case "string":
-            return StringValue("").Unmarshall(p)
+            return StringValue("").LoadXML(p)
         case "double":
-            return DoubleValue(0).Unmarshall(p)
-        case "dateTime.iso8601":
-            return DateTimeValue{}.Unmarshall(p)
+            return DoubleValue(0).LoadXML(p)
+        case "datetime.iso8601":
+            return DateTimeValue{}.LoadXML(p)
         case "base64":
-            return make(Base64Value,0).Unmarshall(p)
+            return make(Base64Value,0).LoadXML(p)
         case "struct":
-            return StructValue{}.Unmarshall(p)
+            return StructValue{}.LoadXML(p)
         case "fault":
-            return Fault{}.Unmarshall(p)
+            return Fault{}.LoadXML(p)
         case "array":
-            return make(ArrayValue,0).Unmarshall(p)
+            return make(ArrayValue,0).LoadXML(p)
         default: return nil, error(fmt.Sprintf("Unknown type: %s", start.Name.Local))
     }
     return nil, nil

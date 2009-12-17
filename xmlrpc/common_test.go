@@ -2,10 +2,10 @@ package xmlrpc_test
 
 import (. "xmlrpc"; "testing"; "strings")
 
-type comp func(MarshallUnmarshaller,MarshallUnmarshaller) bool;
+type comp func(ParamValue,ParamValue) bool;
 
-func defaultCompare(a,b MarshallUnmarshaller) bool { return a == b }
-func arrayCompare(a,b MarshallUnmarshaller) bool {
+func defaultCompare(a,b ParamValue) bool { return a == b }
+func arrayCompare(a,b ParamValue) bool {
     ap, ok := a.(Base64Value);
     if !ok {return false}
     bp, ok := b.(Base64Value);
@@ -22,7 +22,7 @@ func TestSimpleXMLReader(t *testing.T) {
     runTest("<base64>SGVsbG8gV29ybGQ=</base64>", Base64Value(strings.Bytes("Hello World")), arrayCompare, t)
 }
 
-func runTest(xml string, value MarshallUnmarshaller, compare comp, t *testing.T) {
+func runTest(xml string, value ParamValue, compare comp, t *testing.T) {
     m, err := ParseMessage(strings.NewReader(xml));
     if err != nil {
         t.Errorf("Could not parse (%s): %v", xml, err)
