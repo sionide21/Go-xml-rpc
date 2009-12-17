@@ -1,9 +1,30 @@
 package xmlrpc
 
-import ("io")
+import ("io"; "xml"; "strings"; "os")
 
 type Response struct {
     Value ParamValue
+}
+
+func ReadResponse(in io.Reader) (Response, os.Error) {
+    p := tokenStream{xml.NewParser(in)};
+    p.next(false) // Discard <methodResponse>
+    t, err := p.next(false)
+    if err != nil { return Response{}, err }
+    resp, ok := t.(xml.StartElement)
+    if !ok { return Response{}, error("Invalid Response") }
+    switch strings.ToLower(resp.Name.Local) {
+        case "fault":
+            f, err := Fault{}.LoadXML(p.Parser)
+            if err == nil { err = f.(Fault) }
+            return Response{}, err
+        case "params":
+            p.next(false) // Eat <param>
+            p.next(false) // Eat <value>
+            a, err := parseMessage(p.Parser)
+            return Response{a}, err
+    }
+    return Response{}, error("Invalid Response")
 }
 
 func (r Response) SendXML(out io.Writer) {

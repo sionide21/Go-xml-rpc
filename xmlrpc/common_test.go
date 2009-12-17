@@ -1,6 +1,6 @@
 package xmlrpc_test
 
-import (. "xmlrpc"; "testing"; "strings")
+import (. "xmlrpc"; "testing"; "strings"; "bytes")
 
 type comp func(ParamValue,ParamValue) bool;
 
@@ -22,6 +22,19 @@ func TestSimpleXMLReader(t *testing.T) {
     runTest("<base64>SGVsbG8gV29ybGQ=</base64>", Base64Value(strings.Bytes("Hello World")), arrayCompare, t)
     //runTest("<?xml version=\"1.0\"?>\n<array> \n\t<data>\n\t\t<value><base64>SGVsbG8gV29ybGQ=</base64></value>\n\t</data>\n</array>", Base64Value(strings.Bytes("Hello World")), arrayCompare, t)
     //runTest("<?xml version=\"1.0\"?>\n<struct>\n\t<member>\t<name>Something</name><value><array> \n\t<data>\n\t\t<value><base64>SGVsbG8gV29ybGQ=</base64></value>\n\t</data>\n</array></value></member></struct>", Base64Value(strings.Bytes("Hello World")), arrayCompare, t)
+}
+
+func TestResponse(t *testing.T) {
+    r := `<?xml version="1.0"?>
+            <methodResponse>
+               <params>
+                  <param>
+                     <value><string>South Dakota</string></value>
+                     </param>
+                  </params>
+               </methodResponse>`
+    resp, _ := ReadResponse(bytes.NewBufferString(r))
+    defaultCompare(resp.Value, StringValue("South Dakota"))
 }
 
 func runTest(xml string, value ParamValue, compare comp, t *testing.T) {

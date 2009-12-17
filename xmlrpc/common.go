@@ -237,12 +237,13 @@ func (f Fault) ToXML() string {
     return faultStruct.ToXML()
 }
 
-func (f Fault) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
-    t, err := p.Token();
+func (f Fault) LoadXML(parser *xml.Parser) (ParamValue, os.Error) {
+    p := tokenStream{parser}
+    t, err := p.next(false);
     if err != nil {return nil, err}
     start,ok := t.(xml.StartElement);
     if !ok || start.Name.Local != "value" {return nil, error("Unexpected symbol")}
-    m, err := parseMessage(p);
+    m, err := parseMessage(p.Parser);
     if err != nil {return nil, err}
     s,ok1 := m.(StructValue);
     msg, ok2 := s["faultString"].(StringValue);
