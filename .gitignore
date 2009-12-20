@@ -1,0 +1,7 @@
+6.out
+*.6
+_test
+.*.swp
+_obj
+.DS_Store
+_site

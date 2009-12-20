@@ -3,8 +3,9 @@ layout: default
 title: Go XML-RPC Library
 ---
 
-This project <a href="http://github.com/sionide21/Go-xml-rpc">Go XML-RPC Library</a> is awesome.
+This library provides low level functionality for XML-RPC communications. It allows a developer to create a communication library for their program without have to worry about the network details.
 
-To enable Disqus comments + badges for this site, [add it to your Disqus account](http://disqus.com/add/).
+Authors
+=======
 
-Also, you can/should [create a Lighthouse project](http://sionide21.lighthouseapp.com/projects/new) for your project and update "TODO" within the _layouts files with the project id (e.g. "12345-Go-xml-rpc" from the Lighthouse project url).
+Ben Olive <[sionide21@gmail.com](mailto:sionide21@gmail.com)>
