@@ -1,3 +1,4 @@
+// This package provides low level xmlrpc functionality.
 package xmlrpc
 
 import ("time"; "fmt"; "encoding/base64";  "strconv"; "strings"; "xml"; "os"; "io")
@@ -57,7 +58,7 @@ func (e error) String() string {
     return string(e)
 }
 
-// Marshal and LoadXML functions
+// ToXML and LoadXML functions
 func (i IntValue) ToXML() string {
     return fmt.Sprintf("<int>%v</int>", i)
 }

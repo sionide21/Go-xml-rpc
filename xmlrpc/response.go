@@ -6,6 +6,10 @@ type Response struct {
     Value ParamValue
 }
 
+// This methods reads the xml representation of a response
+// to a io.Writer. It is public mostly for debugging or alternate 
+// communication. To call a remote function you should use
+// `xmlrpc.Call`.
 func ReadResponse(in io.Reader) (Response, os.Error) {
     p := tokenStream{xml.NewParser(in)};
     p.next(false) // Discard <methodResponse>
