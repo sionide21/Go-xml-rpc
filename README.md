@@ -14,10 +14,10 @@ The Makefile provided expects you to have setup the environment vairables `$GORO
 Installation
 ------------
 
-	Go into the `xmlrpc` sub-directory.
-	Type `make install`
+	Go into the 'xmlrpc' sub-directory.
+	Type 'make install'
 
-This will compile the library and install it in your goroot. It is safe to run this to upgrade the library as well. To remove simply type `make nuke` in the same directory you typed install.
+This will compile the library and install it in your `$GOROOT/pkg` directory. It is safe to run this to upgrade the library as well. To remove simply type `make nuke` in the same directory you typed install.
 
 Usage
 -----
