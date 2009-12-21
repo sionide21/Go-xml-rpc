@@ -34,6 +34,6 @@ Create a new `xmlrpc.RemoteMethod` with your endpoint and method and the `Call` 
 	
 	result, error := listBlogs.Call(username, password)
 	
-`result` will be of type ParamValue and will require a type assertion to do much with. Read more about `ParamValue`s on the [wiki][1].
+`result` will be of type ParamValue and will require a type assertion to do much with. Read more about `ParamValue`s on the [wiki][].
 
 [wiki]: http://wiki.github.com/sionide21/Go-xml-rpc/paramvalue "Lst of ParamValues"
