@@ -61,5 +61,6 @@ func param(param interface{}) ParamValue {
 	case *reflect.StructValue:
 		return structParams(v)
 	}
+    // TODO How should this error be handled?
 	return StringValue(fmt.Sprintf("Error: Unknown Param Type (%T)\n", param))
 }
