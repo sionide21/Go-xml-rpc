@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// Given a list of args return an array of `ParamValue`s
 func Params(params ...) []ParamValue {
 	pStruct := reflect.NewValue(params).(*reflect.StructValue)
 	par := make([]ParamValue, pStruct.NumField())
