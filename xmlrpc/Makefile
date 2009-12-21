@@ -10,5 +10,6 @@ GOFILES=\
     request.go\
     response.go\
     http.go\
+    param.go\
 
 include $(GOROOT)/src/Make.pkg
