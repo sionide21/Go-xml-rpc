@@ -7,9 +7,9 @@ This is a library to bring [xml-rpc][1] functionality to the GO programming lang
 
 Requirements
 ------------
-The Makefile provided expects you to have setup the environment vairables `$GOROOT` and `$GOARCH` as instructed in the [Go setup guide][]. If you do not have these, you can still compile the project manually.
+The Makefile provided expects you to have setup the environment vairables `$GOROOT` and `$GOARCH` as instructed in the [Go setup guide][1]. If you do not have these, you can still compile the project manually.
 
-[Go setup guide]: <http://golang.org/doc/install.html#tmp_17> "Go setup - Environment Variables"
+[1]: <http://golang.org/doc/install.html#tmp_17> "Go setup - Environment Variables"
 
 Installation
 ------------
@@ -34,6 +34,6 @@ Create a new `xmlrpc.RemoteMethod` with your endpoint and method and the `Call` 
 	
 	result, error := listBlogs.Call(username, password)
 	
-`result` will be of type ParamValue and will require a type assertion to do much with. Read more about `ParamValue`s on the [wiki][].
+`result` will be of type ParamValue and will require a type assertion to do much with. Read more about `ParamValue`s on the [wiki][1].
 
-[wiki]: <http://wiki.github.com/sionide21/Go-xml-rpc/paramvalue> "Lst of ParamValues"
+[1]: <http://wiki.github.com/sionide21/Go-xml-rpc/paramvalue> "Lst of ParamValues"
