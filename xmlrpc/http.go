@@ -15,7 +15,7 @@ import (
 // xmlrpc.Fault.
 func (r RemoteMethod) Call(args ...) (ParamValue, os.Error) {
 	body := new(bytes.Buffer)
-	r.SendXML(body, r.params(args))
+	r.SendXML(body, Params(args))
 	resp, err := http.Post(r.Endpoint, "text/xml", body)
 	if err != nil {
 		return nil, err

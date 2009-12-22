@@ -12,13 +12,8 @@ import (
 // The remote method to call. Endpoint is the URL of the endpoint
 // Method is the name of the method to call.
 type RemoteMethod struct {
-	Endpoint       string
-	Method         string
-	RemoteFieldMap map[string](map[string]string)
-}
-
-func NewRemoteMethod(endpoint, method string) *RemoteMethod {
-	return &RemoteMethod{endpoint, method, make(map[string](map[string]string))}
+	Endpoint string
+	Method   string
 }
 
 // This methods writes the xml representation of the request
