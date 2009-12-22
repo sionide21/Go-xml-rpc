@@ -23,7 +23,11 @@ func Params(params ...) []ParamValue {
 func structParams(v *reflect.StructValue) StructValue {
 	p := make(StructValue, v.NumField())
 	for n := 0; n < v.NumField(); n++ {
-		key := v.Type().(*reflect.StructType).Field(n).Name
+		f := v.Type().(*reflect.StructType).Field(n)
+		key := f.Name
+		if f.Tag != "" {
+			key = f.Tag
+		}
 		p[key] = param(v.Field(n))
 	}
 	return p
