@@ -132,8 +132,8 @@ func (d DoubleValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
 }
 
 func (d DateTimeValue) ToXML() string {
-	// TODO try to get ISO8601 in stdlib
-	return fmt.Sprintf("<dateTime.iso8601>%s</dateTime.iso8601>", "NOT IMPLEMENTED")
+	v := time.Time(d)
+	return fmt.Sprintf("<dateTime.iso8601>%s</dateTime.iso8601>", v.ISO8601())
 }
 
 func (d DateTimeValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
