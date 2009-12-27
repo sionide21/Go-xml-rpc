@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"os"
 	"time"
+	"fmt"
 )
 
 // Calls a remote xmlrpc method. Response is the valid response form the server.
@@ -20,6 +21,9 @@ func (r RemoteMethod) Call(args ...) (ParamValue, os.Error) {
 	resp, err := http.Post(r.Endpoint, "text/xml", body)
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		return nil, error(fmt.Sprintf("%s (%d)", resp.Status, resp.StatusCode))
 	}
 	ret, err := ReadResponse(resp.Body)
 	return ret.Value, err
