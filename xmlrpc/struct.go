@@ -6,6 +6,10 @@ import (
 
 func (st StructValue) GetInt(s string) int { return int(st[s].(IntValue)) }
 
+func (st StructValue) GetRaw(s string) ParamValue {
+	return st[s]
+}
+
 func (st StructValue) GetString(s string) string {
 	return string(st[s].(StringValue))
 }

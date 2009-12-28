@@ -22,6 +22,8 @@ type ParamValue interface {
 	ToXML() string
 	// Populate this item based on the provided value
 	LoadXML(*xml.Parser) (ParamValue, os.Error)
+	// A string representation of the value
+	String() string
 }
 
 // Allows for easier handling of xml tokens
@@ -78,7 +80,7 @@ type error string
 func (e error) String() string { return string(e) }
 
 // ToXML and LoadXML functions
-func (i IntValue) ToXML() string { return fmt.Sprintf("<int>%v</int>", i) }
+func (i IntValue) ToXML() string { return fmt.Sprintf("<int>%d</int>", i) }
 
 func (i IntValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
 	s, er := readBody(p)
@@ -90,7 +92,9 @@ func (i IntValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
 	return i, err
 }
 
-func (b BooleanValue) ToXML() string { return fmt.Sprintf("<boolean>%v</boolean>", b) }
+func (i IntValue) String() string { return string(i) }
+
+func (b BooleanValue) ToXML() string { return fmt.Sprintf("<boolean>%t</boolean>", b) }
 
 func (b BooleanValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
 	s, er := readBody(p)
@@ -108,7 +112,14 @@ func (b BooleanValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
 	return b, nil
 }
 
-func (s StringValue) ToXML() string { return fmt.Sprintf("<string>%v</string>", s) }
+func (i BooleanValue) String() string {
+	if i {
+		return "true"
+	}
+	return "false"
+}
+
+func (s StringValue) ToXML() string { return fmt.Sprintf("<string>%s</string>", s) }
 
 func (s StringValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
 	val, er := readBody(p)
@@ -119,7 +130,9 @@ func (s StringValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
 	return s, nil
 }
 
-func (d DoubleValue) ToXML() string { return fmt.Sprintf("<double>%v</double>", d) }
+func (i StringValue) String() string { return string(i) }
+
+func (d DoubleValue) ToXML() string { return fmt.Sprintf("<double>%f</double>", d) }
 
 func (d DoubleValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
 	val, er := readBody(p)
@@ -131,6 +144,8 @@ func (d DoubleValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
 	return d, err
 }
 
+func (i DoubleValue) String() string { return fmt.Sprintf("%f", float(i)) }
+
 func (d DateTimeValue) ToXML() string {
 	v := time.Time(d)
 	return fmt.Sprintf("<dateTime.iso8601>%s</dateTime.iso8601>", v.ISO8601())
@@ -138,6 +153,11 @@ func (d DateTimeValue) ToXML() string {
 
 func (d DateTimeValue) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
 	return d, error("date Not Implemented")
+}
+
+func (i DateTimeValue) String() string {
+	a := time.Time(i)
+	return a.String()
 }
 
 func (b Base64Value) ToXML() string {
@@ -158,6 +178,8 @@ func (b Base64Value) LoadXML(p *xml.Parser) (ParamValue, os.Error) {
 	b = b[0:rLen]
 	return b, err
 }
+
+func (i Base64Value) String() string { return string(i) }
 
 func (s StructValue) ToXML() (ret string) {
 	ret = "<struct>"
@@ -218,6 +240,8 @@ func (s StructValue) LoadXML(parser *xml.Parser) (ParamValue, os.Error) {
 	return s, nil
 }
 
+func (i StructValue) String() string { return fmt.Sprintf("v", map[string]ParamValue(i)) }
+
 func (s ArrayValue) ToXML() (ret string) {
 	ret = "<array><data>"
 	for _, value := range s {
@@ -273,6 +297,8 @@ func (a ArrayValue) LoadXML(parser *xml.Parser) (ParamValue, os.Error) {
 	return a[0:x], nil
 
 }
+
+func (i ArrayValue) String() string { return fmt.Sprintf("v", []ParamValue(i)) }
 
 func (f Fault) ToXML() string {
 	faultStruct := StructValue{"faultCode": IntValue(f.FaultCode), "faultString": StringValue(f.FaultString)}
