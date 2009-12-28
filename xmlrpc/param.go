@@ -73,6 +73,11 @@ func param(param interface{}) ParamValue {
 		return arrayParams(v)
 	case *reflect.StructValue:
 		return structParams(v)
+	case *reflect.InterfaceValue:
+		// If it is already a param value just return it
+		if ret, ok := v.Interface().(ParamValue); ok {
+			return ret
+		}
 	}
 	// TODO How should this error be handled?
 	return StringValue(fmt.Sprintf("Error: Unknown Param Type (%T)\n", param))
