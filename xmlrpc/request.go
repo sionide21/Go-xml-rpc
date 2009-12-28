@@ -12,8 +12,9 @@ import (
 // The remote method to call. Endpoint is the URL of the endpoint
 // Method is the name of the method to call.
 type RemoteMethod struct {
-	Endpoint string
-	Method   string
+	Endpoint   string
+	Method     string
+	BaseParams []ParamValue
 }
 
 // This methods writes the xml representation of the request

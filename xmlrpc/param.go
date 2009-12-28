@@ -20,6 +20,11 @@ func Params(params ...) []ParamValue {
 	return par
 }
 
+func argLength(args ...) int {
+	pStruct := reflect.NewValue(args).(*reflect.StructValue)
+	return pStruct.NumField()
+}
+
 func structParams(v *reflect.StructValue) StructValue {
 	p := make(StructValue, v.NumField())
 	for n := 0; n < v.NumField(); n++ {

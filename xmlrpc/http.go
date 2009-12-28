@@ -17,7 +17,21 @@ import (
 // xmlrpc.Fault.
 func (r RemoteMethod) Call(args ...) (ParamValue, os.Error) {
 	body := new(bytes.Buffer)
-	r.SendXML(body, Params(args))
+	if r.BaseParams != nil {
+		p := make([]ParamValue, len(r.BaseParams)+argLength(args))
+		i := 0
+		for _, v := range r.BaseParams {
+			p[i] = v
+			i++
+		}
+		for _, v := range Params(args) {
+			p[i] = v
+			i++
+		}
+		r.SendXML(body, p)
+	} else {
+		r.SendXML(body, Params(args))
+	}
 	resp, err := http.Post(r.Endpoint, "text/xml", body)
 	if err != nil {
 		return nil, err
