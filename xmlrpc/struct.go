@@ -25,3 +25,11 @@ func (st StructValue) GetBoolean(s string) bool {
 func (st StructValue) GetBytes(s string) []byte {
 	return []byte(st[s].(Base64Value))
 }
+
+func (st StructValue) GetArray(s string) ArrayValue {
+	return st[s].(ArrayValue)
+}
+
+func (st StructValue) GetStruct(s string) StructValue {
+	return st[s].(StructValue)
+}
