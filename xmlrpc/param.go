@@ -82,12 +82,12 @@ func param(param interface{}) ParamValue {
 		return arrayParams(v)
 	case *reflect.StructValue:
 		return structParams(v)
-    case *reflect.MapValue:
-        // Might be a map[string]ParamValue which is treated as a struct
-        ty, _ := v.Type().(*reflect.MapType)
-        if _, ok := ty.Key().(*reflect.StringType); ok {
-            return mapParams(v)
-        }
+	case *reflect.MapValue:
+		// Might be a map[string]ParamValue which is treated as a struct
+		ty, _ := v.Type().(*reflect.MapType)
+		if _, ok := ty.Key().(*reflect.StringType); ok {
+			return mapParams(v)
+		}
 	case *reflect.InterfaceValue:
 		// If it is already a param value just return it
 		if ret, ok := v.Interface().(ParamValue); ok {
