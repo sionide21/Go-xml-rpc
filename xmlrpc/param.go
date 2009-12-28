@@ -38,6 +38,15 @@ func structParams(v *reflect.StructValue) StructValue {
 	return p
 }
 
+func mapParams(v *reflect.MapValue) StructValue {
+	p := make(StructValue, v.Len())
+	for _, k := range v.Keys() {
+		key := k.(*reflect.StringValue).Get()
+		p[key] = param(v.Elem(k))
+	}
+	return p
+}
+
 func byteParams(params *reflect.SliceValue) Base64Value {
 	par := make([]byte, params.Len())
 
@@ -73,6 +82,12 @@ func param(param interface{}) ParamValue {
 		return arrayParams(v)
 	case *reflect.StructValue:
 		return structParams(v)
+    case *reflect.MapValue:
+        // Might be a map[string]ParamValue which is treated as a struct
+        ty, _ := v.Type().(*reflect.MapType)
+        if _, ok := ty.Key().(*reflect.StringType); ok {
+            return mapParams(v)
+        }
 	case *reflect.InterfaceValue:
 		// If it is already a param value just return it
 		if ret, ok := v.Interface().(ParamValue); ok {
