@@ -1,3 +1,6 @@
+*Note*: This project is no longer actively maintained and probably won't work in it's current form.
+
+
 GO XML-RPC Library
 ==================
 
